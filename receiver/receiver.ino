@@ -1,9 +1,10 @@
-int recv_pin = 0;
+int recv_pin = 8;
 void setup() {
  Serial.begin(9600);
 }
 
 void loop() {
-  int signal = analogRead(recv_pin);
+  delay(100);
+  int signal = digitalRead(recv_pin);
   Serial.println(signal);
 }
