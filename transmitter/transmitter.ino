@@ -1,30 +1,52 @@
-#include <PWM.h>
-int out_pin = 3;
-char serial_data;
-int32_t high_freq = 93000;
-int32_t low_freq = 87000;
+#include "PWM.h"
+int led = 3;
+int pw = 127; //Pulse Width
+int32_t frequency = 90000;
+bool success;
+String serial_data = "";
+int data_length = 0;
+float delay_amt = 10;
 
-void send(int bit) {
-  if(bit == 1) {
-    SetPinFrequency(out_pin, high_freq);
-  }
-  else {
-    SetPinFrequency(out_pin, low_freq);
-  }
-}
-
-void setup()  {
+void setup() 
+{
   Serial.begin(9600);
-  pinMode(out_pin, OUTPUT);
+  InitTimersSafe();
+  bool success = SetPinFrequencySafe(led, 90000);
+  if(success) 
+  {
+    pinMode(13, OUTPUT);
+    digitalWrite(13, HIGH);
+  }
+  pwmWrite(led, pw);
 }
 
-void loop() {
-  if(Serial.available() > 0) {
-    serial_data = Serial.read();
-    for(int i = 0; i < 8; i++) {
-      int bit_to_send = serial_data && 1;
-      send(bit_to_send);
-      serial_data >> 1;
+void loop() 
+{
+    serial_data = Serial.readString();
+    data_length = serial_data.length();
+    for(int j=0; j<data_length-1; j++)
+    {
+      send(serial_data[j]);
+      Serial.println(serial_data[j]);
+      SetPinFrequency(led, 90000);
+      delay(10);
     }
+}
+
+void send(char character)
+{
+  for(int i=7; i>-1; i--)
+  {
+    if((character >> i) & 1)
+    {
+      SetPinFrequency(led, 93000);
+      Serial.print(1);
+    }
+    else
+    {
+      SetPinFrequency(led, 87000);
+      Serial.print(0);
+    }
+    delay(delay_amt);
   }
 }
