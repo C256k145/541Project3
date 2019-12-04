@@ -1,11 +1,12 @@
-int input_pin = A3; //Analogread should be fast enough here
+int input_pin = A5; //Analogread should be fast enough here
 float input_val;
 char output;
+bool flag = false;
 
-/*These values specify the range of analog values we should expect to see from the input pin,
-everything in between this values is treated as null*/
-float high_freq_val; //If analogread() returns higher than this value, we read a '1'
-float low_freq_val; //If analogread() returns low than this value, we read a '0'
+float center_freq_val;
+float high_freq_val;
+float low_freq_val;
+float delay_amt = 10;
 
 void setup() {
   Serial.begin(9600);
@@ -13,27 +14,51 @@ void setup() {
 }
 
 void loop() {
-  input_val = analogRead(input_pin);
-  if(input_val > high_freq_val || input_val < low_freq_val) {
-    retrieve(input_val); 
+  if(flag == false) {
+    center_freq_val = calibrate(); //calibrates
+    high_freq_val = 1.05*center_freq_val;
+    low_freq_val = 0.95*center_freq_val;
+    flag = true;
   }
+  float test_val = measure();
+  if(test_val > high_freq_val || test_val < low_freq_val) {
+    retrieve();
+  }
+  output = NULL;
 }
 
-void retrieve(float start_val) {
-  if(start_val > high_freq_val) {
-    bitWrite(output, 0, 1);
+float measure() {
+  float return_val = 0;
+  for(int i = 0; i < 10; i++) {
+    return_val += analogRead(input_pin);
   }
-  else {
-    bitWrite(output, 0, 0);
+  return(return_val/10.0);
+}
+
+void retrieve() {
+  for(int i = 7; i >= 0; i--) {
+    float test = measure();
+    int bit_to_write = determineBit(test);
+    bitWrite(output, i, bit_to_write);
+    delay(delay_amt);
   }
-  for(int i = 1; i < 8; i ++) {
-    input_val = analogRead(input_pin);
-    if(input_val > high_freq_val) {
-      bitWrite(output, i, 1);
-    }
-    else {
-      bitWrite(output, 0, 0);
-    }
+  Serial.print(output);
+}
+
+int determineBit(float val) {
+  if(val > high_freq_val) {
+    return(1);
   }
-  Serial.println(output);
+  else if(val < low_freq_val) {
+    return(0);
+  }
+  return(NULL);
+}
+
+float calibrate() {
+  float val = 0.0;
+  for(int i = 0; i < 10; i++) {
+    val += measure();
+  }
+  return(val/10.0);
 }
