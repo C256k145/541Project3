@@ -5,12 +5,13 @@ int32_t frequency = 90000;
 bool success;
 String serial_data = "";
 int data_length = 0;
+float delay_amt = 10;
 
 void setup() 
 {
   Serial.begin(9600);
   InitTimersSafe();
-  bool success = SetPinFrequencySafe(led, 80000);
+  bool success = SetPinFrequencySafe(led, 90000);
   if(success) 
   {
     pinMode(13, OUTPUT);
@@ -27,15 +28,17 @@ void loop()
     {
       send(serial_data[j]);
       Serial.println(serial_data[j]);
+//      delay(delay_amt/2.0);
       SetPinFrequency(led, 90000);
+      delay(10);
     }
 }
 
 void send(char character)
 {
-  for(int i=7; i>=0; i--)
+//  startSequence();
+  for(int i=7; i>-1; i--)
   {
-    delay(1);
     if((character >> i) & 1)
     {
       SetPinFrequency(led, 93000);
@@ -46,5 +49,17 @@ void send(char character)
       SetPinFrequency(led, 87000);
       Serial.print(0);
     }
+    delay(delay_amt);
   }
 }
+
+void startSequence() {
+  SetPinFrequency(led, 93000);
+  delay(delay_amt);
+  SetPinFrequency(led, 87000);
+  delay(delay_amt);
+  SetPinFrequency(led, 93000);
+  delay(delay_amt);
+  SetPinFrequency(led, 87000);
+}
+
